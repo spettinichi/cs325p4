@@ -119,20 +119,25 @@ void greedyPath(std::vector<City*> &cities, Path *path){
 			if(!cities[i]->visited){
 				currDist = findDistance(current, cities[i]);
 				if(currDist < minDist && currDist != 0){
-					minDist = currDist;
-					minSlot = i;
+					path->origin->prev = cities[i];
+					current->next = cities[i];
+					current->distToNext = currDist;
+					citites[i]->prev = current;
+					citites[i]->next = path->origin;
+					//minDist = currDist;
+					//minSlot = i;
 				}
 			}
 		}
-		current->next = cities[minSlot];
-		current->distToNext = minDist;
-		cities[minSlot]->prev = current;
+		//current->next = cities[minSlot];
+		//current->distToNext = minDist;
+		//cities[minSlot]->prev = current;
 		current = current->next;
 		current->visited = true;
 		totalVisited++;
 	}
-	path->origin->prev = current;
-	current->next = path->origin;
+	//path->origin->prev = current;
+	//current->next = path->origin;
 	path->numCities = totalVisited;
 	path->distance = findPathDistance(path);
 }
@@ -150,7 +155,6 @@ void doSwap(City *city1, City *city2){
 	city2->next = city1->next;
 	city1->next = temp;
 }
-
 void opt2Path(Path *path){
 	int currDist = path->distance;
 	Path *newPath = createPath();
