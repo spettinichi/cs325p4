@@ -57,10 +57,10 @@ void resetVisited(std::vector<City*> &cities){
 	}
 }
 void resetVisited(Path *path){
-	path->origin->visited = false;
-	City *current = path->origin->next;
-	while(path->origin != current){
+	City *current = path->origin;
+	while(current->visited){
 		current->visited = false;
+		current = current->next;
 	}
 }
 int findPathDistance(Path *path){
@@ -73,7 +73,7 @@ int findPathDistance(Path *path){
 	return dist;
 }
 int findDistance(City *city1, City *city2){
-	return sqrt((city2->xCoord - city1->xCoord)^2 + (city2->yCoord - city1->yCoord)^2);
+	return sqrt(pow((city2->xCoord - city1->xCoord),2) + pow((city2->yCoord - city1->yCoord),2));
 }
 
 void readFile(std::string inFileName, std::vector<City*> &cities){
@@ -94,15 +94,11 @@ void readFile(std::string inFileName, std::vector<City*> &cities){
 		for(int i=0; i<fileLines.size(); i++){
 			int slot = 0;
 			std::string temp = "";
-			for(int j=0; fileLines[i][j] != '\n'; j++){
-				if (fileLines[i][j] != ' '){
-					temp += fileLines[i][j];
-				}
-				else {
-					std::stringstream ss(temp);
-					ss >> cityData[slot];
-					slot++;
-				}
+			int j=0;
+			std::stringstream ss(fileLines[i]);
+			while(ss >> num){
+				cityData[slot] = num;
+				slot++;
 			}
 			cities.push_back(createCity(cityData[0], cityData[1], cityData[2]));
 		}
@@ -110,15 +106,15 @@ void readFile(std::string inFileName, std::vector<City*> &cities){
 }
 
 void greedyPath(std::vector<City*> &cities, Path *path){
+	resetVisited(path);
 	path->origin = cities[0];
 	path->origin->visited = true;
-	City *current;
-	current = path->origin;
-	int minDist = 999999;
+	City *current = path->origin;
+	int minDist = 9999999;
 	int minSlot = 0;
 	int totalVisited = 1;
 	int currDist;
-	while(totalVisited < cities.size()-1){
+	while(totalVisited < cities.size()){
 		for(int i=1; i<cities.size(); i++){
 			if(!cities[i]->visited){
 				currDist = findDistance(current, cities[i]);
@@ -163,7 +159,7 @@ void opt2Path(Path *path){
 	City *current = newPath->origin->next;
 	City *swapper = current->next;
 	while(current != path->origin){
-		while(swapper != path->origin){
+		while(!swapper->visited){
 			doSwap(current, swapper);
 			int newDist = findPathDistance(newPath);
 			if(newDist < currDist){
@@ -174,7 +170,23 @@ void opt2Path(Path *path){
 			}
 			swapper = swapper->next;
 		}
+		resetVisited(newPath);
 		current = current->next;
+	}
+}
+
+void print(Path *path){
+	resetVisited(path);
+	std::cout << path->distance << std::endl;
+	City *current = path->origin;
+	while(!current->visited){
+		std::cout << current->num << " " << current->xCoord << " " << current->yCoord << std::endl;
+		current->visited = true;
+	}
+}
+void print(std::vector<City*> cities){
+	for(int i=0; i<cities.size(); i++){
+		std::cout << cities[i]->num << " " << cities[i]->xCoord << " " << cities[i]->yCoord << std::endl;
 	}
 }
 
@@ -194,14 +206,18 @@ int main(int argc, char *argv[]){
 	readFile(inFileName, cities);
 	
 	greedyPath(cities, path);
-	resetVisited(path);
-	opt2Path(path);
+	print(path);
+	resetVisited(path);;
+	//opt2Path(path);
+	//print(path);
 	
+	resetVisited(path);
 	outFile.open(outFileName);
 	outFile << path->distance << std::endl;
-	outFile << path->origin->num;
-	City *current = path->origin->next;
-	while(current != path->origin)
+	City *current = path->origin;
+	while(!current->visited){
 		outFile << current->num << std::endl;
+		current->visited = true;
+	}
 	outFile.close();
 }
