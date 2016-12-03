@@ -1,3 +1,12 @@
+"""
+ "" Author: Group 26: Morgan Brenner, Sammy Pettinichi, Rachel Weissman-Hohler
+ "" Class: CS 325-400
+ "" Due Date: 12/2/16
+ "" Date Last Modified: 12/2/16
+ "" Description: Project 4: Clarke-Wright and 2-Opt algorithm solver for 
+ ""              the traveling salesman problem.
+ "" Filename: clarkeWright.py
+"""
 
 import math
 import sys
@@ -11,10 +20,13 @@ def main(argv):
     if len(argv) < 2:
         sys.exit("USAGE: clarkeWright.py <file-name>")
     fileName = argv[1]
+    if (len(argv) == 3) and (argv[2] == '-l'):
+        timeLimit = 160
+    else:
+        timeLimit = 7200
 
     """ read in file """
     vertices = readInFile(fileName)
-    """print("file read in")"""
 
     """ choose hub node """
     numVertices = len(vertices)
@@ -22,15 +34,12 @@ def main(argv):
 
     """ initialize graph """
     adjacencyList = initializeGraph(numVertices, hubNode)
-    """print("graph initialized")"""
 
     """ create distance matrix """
     distanceMatrix = createDistanceMatrix(vertices, numVertices)
-    """print("distance matrix created")"""
 
     """ create savings list """
     savingsList = calculateSavings(distanceMatrix, hubNode, numVertices)
-    """print("savings list created")"""
 
     """ take shortcuts until a Hamiltonian cycle is created """
     hamiltonian = False
@@ -44,13 +53,11 @@ def main(argv):
             else:
                 removeShortcut(adjacencyList, shortcut[1], shortcut[2], hubNode)
 
-    """print("found hamiltonian")"""
     """ improve tour with 2-opt """
-    twoOpt(adjacencyList, distanceMatrix)
+    twoOpt(adjacencyList, distanceMatrix, startTime, timeLimit)
 
     """ calulate length of tour """
     tourLength = calcTourLength(adjacencyList, distanceMatrix)
-    """print("calculated tour length")"""
 
     """ write results to file """
     writeToFile(fileName, tourLength, adjacencyList)
@@ -293,8 +300,11 @@ def checkHamiltonian(numVertices, adjacencyList):
  "" swapping the edges decreases the tour length.
  "" Looks at the graph twice.
 """
-def twoOpt(adjacencyList, distanceMatrix):
-    for j in range(0, 2):
+def twoOpt(adjacencyList, distanceMatrix, startTime, timeLimit):
+    changes = True
+    currTime = 0
+    while (currTime < timeLimit) and (changes is True):
+        changes = False
         for i in range(0, len(adjacencyList)):
             swap = False
             firstVertex = i
@@ -334,11 +344,12 @@ def twoOpt(adjacencyList, distanceMatrix):
                 else:
                     newSecondEdge = distanceMatrix[secondVertex][nextVertex]
                 """ if swap improves tour, swap """
-                """print("original: {}\n new: {}".format(firstEdge + secondEdge, newFirstEdge + newSecondEdge))"""
                 if (firstEdge + secondEdge) > (newFirstEdge + newSecondEdge):
                     swapEdges(firstVertex, secondVertex, currVertex, nextVertex, adjacencyList)
                     swap = True
+                    changes = True
                 lastVertex = currVertex
+        currTime = time.time() - startTime
 
 """
  "" Swaps the edges (firstVertex, secondVertex) and (currVertex, nextVertex)
